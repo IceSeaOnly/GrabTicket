@@ -1,16 +1,16 @@
 package site.binghai.game.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import site.binghai.game.constant.DataPool;
+import site.binghai.game.entity.DanMu;
 import site.binghai.game.entity.JsonReturn;
 import site.binghai.game.entity.Ticket;
 import site.binghai.game.service.DanMuService;
 import site.binghai.game.service.TicketService;
 
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static site.binghai.game.constant.DataPool.*;
@@ -23,6 +23,7 @@ import static site.binghai.game.constant.DataPool.*;
  */
 @RequestMapping("user")
 @RestController
+@CrossOrigin
 public class GameController {
     @Autowired
     private DanMuService danMuService;
@@ -48,9 +49,17 @@ public class GameController {
     /**
      * 拉取弹幕
      */
+    @CrossOrigin
     @RequestMapping("danMuList")
     public Object danMuList() {
-        return JsonReturn.success(danMuService.listTop100());
+        List<DanMu> arr = danMuService.listTop100();
+        return JsonReturn.success(arr.get(randomIndex(arr.size())));
+    }
+
+    private int randomIndex(int max) {
+        Random random = new Random();
+        int v = random.nextInt(max - 1);
+        return v >= 0 ? v : 0;
     }
 
     /**
@@ -97,7 +106,7 @@ public class GameController {
         }
         try {
             Ticket ticket = getBelongs().get(openId);
-            if(ticket != null){
+            if (ticket != null) {
                 return ticket;
             }
             ticket = getTickets().poll(10, TimeUnit.MILLISECONDS);

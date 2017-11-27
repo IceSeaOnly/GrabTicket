@@ -43,8 +43,8 @@ public class DanMuService {
     @Transactional
     public void save(String content) {
         DanMu danMu = new DanMu();
-        danMu.setContent(content);
-        danMu.setGood(randomGoodPoints());
+        danMu.setMessage(content);
+        danMu.setVote(randomGoodPoints());
         danMuDao.save(danMu);
     }
 

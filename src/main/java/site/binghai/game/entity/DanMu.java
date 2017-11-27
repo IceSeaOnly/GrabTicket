@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Transient;
 
 /**
  * Created by binghai on 2017/11/27.
@@ -17,6 +18,10 @@ public class DanMu {
     @Id
     @GeneratedValue
     private int id;
-    private String content;
-    private int good;
+    @Transient
+    private String state = "0";
+    @Transient
+    private String headimg = "img/tanmuhead.jpg";
+    private String message;
+    private int vote;
 }
