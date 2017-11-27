@@ -18,7 +18,7 @@ public class Ticket {
     @Id
     @GeneratedValue
     private int id;
-    private String where;
+    private String position;
     private String openId;
     private String passwd;
     private String name;

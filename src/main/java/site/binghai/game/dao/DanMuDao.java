@@ -13,6 +13,6 @@ import java.util.List;
  */
 public interface DanMuDao extends JpaRepository<DanMu, Integer> {
 
-    @Query(value = "select * from danmu order by id desc limit 100",nativeQuery = true)
+    @Query(value = "select * from dan_mu order by id desc limit 100",nativeQuery = true)
     List<DanMu> listTop100();
 }

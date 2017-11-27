@@ -11,11 +11,9 @@ import site.binghai.game.entity.Ticket;
 import site.binghai.game.service.DanMuService;
 import site.binghai.game.service.TicketService;
 
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import static site.binghai.game.constant.DataPool.*;
 
 /**
  * Created by binghai on 2017/11/27.
@@ -26,69 +24,62 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("user")
 @RestController
 public class GameController {
-    private static String TEXTSHOW = "默认字幕...默认字幕...默认字幕...默认字幕";
-    private static String PASSCODE = "qwerasdf";
-    private static Boolean DBWRITE = Boolean.FALSE;
-    private static BlockingQueue<Ticket> tickets = new LinkedBlockingQueue<>();
-    private static BlockingQueue<Ticket> dbQueue = new LinkedBlockingQueue<>();
-    private static Map<String, Ticket> belongs = new ConcurrentHashMap<>();
-
-    @Autowired
-    private TicketService ticketService;
     @Autowired
     private DanMuService danMuService;
+    @Autowired
+    private TicketService ticketService;
 
+    /**
+     * 抢票是否开始查询
+     */
     @RequestMapping("gameBegin")
     public Object begin() {
         return DataPool.gameBegin() ? gameBegin() : gameNotBegin();
     }
 
-    private Object gameNotBegin() {
+    private Object gameBegin() {
         return JsonReturn.success(null, "抢票开始!");
     }
 
-    private Object gameBegin() {
+    private Object gameNotBegin() {
         return JsonReturn.fail(null, "抢票尚未开始!");
     }
 
+    /**
+     * 拉取弹幕
+     */
     @RequestMapping("danMuList")
     public Object danMuList() {
         return JsonReturn.success(danMuService.listTop100());
     }
 
-    @RequestMapping("danMu")
+    /**
+     * 发弹幕
+     */
+    @RequestMapping(value = "danMu", method = RequestMethod.POST)
     public Object danMu(@RequestParam String content) {
         danMuService.save(content);
         return JsonReturn.success(null);
     }
 
+    /**
+     * 获取文本
+     */
     @RequestMapping("textShow")
     public Object textShow() {
-        return JsonReturn.success(TEXTSHOW, TEXTSHOW);
+        return JsonReturn.success(getTEXTSHOW(), getTEXTSHOW());
     }
 
-    @RequestMapping(value = "editTextShow", method = RequestMethod.POST)
-    public Object textShow(@RequestParam String pass, @RequestParam String content) {
-        if (!pass.equals(PASSCODE)) {
-            return JsonReturn.fail(null, "非法访问");
-        }
-        TEXTSHOW = content;
-        return JsonReturn.success(TEXTSHOW, TEXTSHOW);
-    }
 
-    @RequestMapping("preHeatSys")
-    public Object preHeatSys(@RequestParam String pass) {
-        if (!pass.equals(PASSCODE)) {
-            return JsonReturn.fail(null, "非法访问");
-        }
-        DBWRITE = Boolean.FALSE;
-        tickets.clear();
-        tickets.addAll(ticketService.listAll());
-        return JsonReturn.success(null, "OK");
-    }
-
-    @RequestMapping
+    /**
+     * 抢票入口
+     */
+    @RequestMapping("grabTicket")
     public Object grabTicket(@RequestParam String openId) {
+        if (!DataPool.gameBegin()) {
+            return gameNotBegin();
+        }
+
         Ticket ticket = grabOneTicket(openId);
         if (ticket != null) {
             return JsonReturn.success(ticket, "恭喜!抢票成功!");
@@ -98,18 +89,22 @@ public class GameController {
 
     /**
      * 同步抢票
-     * */
+     */
     private synchronized Ticket grabOneTicket(String openId) {
-        if (!DBWRITE) {
-            DBWRITE = Boolean.TRUE;
+        if (!getDBWRITE()) {
+            setDBWRITE(Boolean.TRUE);
             startWriteThread();
         }
         try {
-            Ticket ticket = tickets.poll(10, TimeUnit.MILLISECONDS);
+            Ticket ticket = getBelongs().get(openId);
+            if(ticket != null){
+                return ticket;
+            }
+            ticket = getTickets().poll(10, TimeUnit.MILLISECONDS);
             if (ticket != null) {
                 ticket.setOpenId(openId);
-                belongs.put(openId, ticket);
-                dbQueue.put(ticket);
+                getBelongs().put(openId, ticket);
+                getDbQueue().put(ticket);
                 return ticket;
             }
         } catch (InterruptedException e) {
@@ -122,6 +117,20 @@ public class GameController {
      * 开启写磁盘线程
      */
     private void startWriteThread() {
-
+        new Thread() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Ticket ticket = getDbQueue().take();
+                        if (ticket != null) {
+                            ticketService.update(ticket);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
     }
 }
