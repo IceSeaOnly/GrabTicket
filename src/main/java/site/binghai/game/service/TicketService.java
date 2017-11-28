@@ -33,4 +33,8 @@ public class TicketService {
     public int resetAll() {
         return ticketDao.resetAll();
     }
+
+    public Ticket findByQrCode(String qrcode) {
+        return null;
+    }
 }

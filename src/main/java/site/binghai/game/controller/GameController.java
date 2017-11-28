@@ -123,6 +123,14 @@ public class GameController {
     }
 
     /**
+     * 获取剩余时间
+     * */
+    @RequestMapping("timeBeforBegin")
+    public String timeBeforBegin(){
+        return DataPool.getHowLongBeforeBegin();
+    }
+
+    /**
      * 开启写磁盘线程
      */
     private void startWriteThread() {

@@ -24,11 +24,13 @@ public class Ticket {
     private String name;
     private String phone;
     private boolean bound;
+    private boolean consumed;
     private long bindTime;
 
     public void setOpenId(String openId) {
         this.openId = openId;
         this.bound = true;
+        this.consumed = false;
         this.bindTime = System.currentTimeMillis();
         this.passwd = UUID.randomUUID().toString();
     }

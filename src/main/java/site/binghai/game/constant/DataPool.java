@@ -21,6 +21,7 @@ public class DataPool {
     private static BlockingQueue<Ticket> tickets = new LinkedBlockingQueue<>();
     private static BlockingQueue<Ticket> dbQueue = new LinkedBlockingQueue<>();
     private static Map<String, Ticket> belongs = new ConcurrentHashMap<>();
+    private static String TimeRemaining = null;
 
     public static long getStartTime() {
         return startTime;
@@ -76,5 +77,38 @@ public class DataPool {
 
     public static void setIndexPage(String indexPage) {
         DataPool.indexPage = indexPage;
+    }
+
+    public static String getHowLongBeforeBegin() {
+        if (TimeRemaining == null) {
+            startTimeCountDown();
+        }
+        return TimeRemaining;
+    }
+
+    private synchronized static void startTimeCountDown() {
+        if (TimeRemaining != null) return;
+        setTimeString();
+        new Thread() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        sleep(1000);
+                        setTimeString();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
+    }
+
+    private static void setTimeString() {
+        long time = getStartTime() - System.currentTimeMillis();
+        time /= 1000;
+        time = time > 0 ? time : 0;
+        time = time > 3599 ? 3599 : time;
+        TimeRemaining = String.format("%02d:%02d", (int) (time / 60), time % 60);
     }
 }

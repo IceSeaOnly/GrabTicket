@@ -7,11 +7,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import site.binghai.game.entity.JsonReturn;
+import site.binghai.game.entity.Ticket;
 import site.binghai.game.service.TicketService;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
 import static site.binghai.game.constant.DataPool.*;
 
@@ -48,8 +50,17 @@ public class AdminController {
             return JsonReturn.fail(null, "非法访问");
         }
         setDBWRITE(Boolean.FALSE);
+        List<Ticket> all = ticketService.listAll();
         getTickets().clear();
-        getTickets().addAll(ticketService.listAll());
+        getBelongs().clear();
+        getDbQueue().clear();
+        for (Ticket ticket : all) {
+            if (ticket.isBound()) {
+                getBelongs().put(ticket.getOpenId(), ticket);
+            } else {
+                getTickets().add(ticket);
+            }
+        }
         return JsonReturn.success(null, "OK");
     }
 
@@ -101,11 +112,33 @@ public class AdminController {
      * 设置开始时间
      */
     @RequestMapping("setStartTime")
-    public Object setStartTimeTs(@RequestParam String pass,@RequestParam Long time) {
+    public Object setStartTimeTs(@RequestParam String pass, @RequestParam Long time) {
         if (!pass.equals(getPASSCODE())) {
             return JsonReturn.fail(null, "非法访问");
         }
         setStartTime(time);
         return JsonReturn.success(null, "OK");
+    }
+
+    /**
+     * 扫描
+     */
+    @RequestMapping("scanQrCode")
+    public Object scanQrCode(@RequestParam String pass, @RequestParam String qrcode) {
+        Ticket ticket = ticketService.findByQrCode(qrcode);
+        return ticket == null ? JsonReturn.fail(null, "此票不存在!") : JsonReturn.success(ticket, "");
+    }
+
+    /**
+     * 检票
+     */
+    public Object checkTickets(@RequestParam String pass, @RequestParam String qrcode) {
+        Ticket ticket = ticketService.findByQrCode(qrcode);
+        if (ticket.isConsumed()) {
+            return JsonReturn.fail(null, "此票已检");
+        }
+        ticket.setConsumed(true);
+        ticketService.update(ticket);
+        return JsonReturn.success(ticket, "检票成功!");
     }
 }

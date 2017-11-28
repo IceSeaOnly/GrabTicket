@@ -35,27 +35,27 @@ function showNav() {//导航栏
     onoff1 = !onoff1;
 }
 
-function showMsg(text,position){
-    var show	=	$('.show_msg').length
-    if(show>0){
+function showMsg(text, position) {
+    var show = $('.show_msg').length
+    if (show > 0) {
 
-    }else{
-        var	div		=	 $('<div></div>');
+    } else {
+        var div = $('<div></div>');
         div.addClass('show_msg');
-        var span	=	$('<span></span>');
+        var span = $('<span></span>');
         span.addClass('show_span');
         span.appendTo(div);
         span.text(text);
         $('body').append(div);
     }
     $(".show_span").text(text);
-    if(position=='bottom'){
-        $(".show_msg").css('bottom','5%');
-    }else if(position=='center'){
-        $(".show_msg").css('top','');
-        $(".show_msg").css('bottom','50%');
-    }else{
-        $(".show_msg").css('bottom','95%');
+    if (position == 'bottom') {
+        $(".show_msg").css('bottom', '5%');
+    } else if (position == 'center') {
+        $(".show_msg").css('top', '');
+        $(".show_msg").css('bottom', '50%');
+    } else {
+        $(".show_msg").css('bottom', '95%');
     }
     $('.show_msg').hide();
     $('.show_msg').fadeIn(1000);
@@ -84,7 +84,7 @@ function jsonGet(url, params, func) {
         if (data['code'] == "success") {
             func(data['data']);
         } else {
-            showMsg(data['msg'],'bottom')
+            showMsg(data['msg'], 'bottom')
         }
     });
 }
@@ -283,13 +283,23 @@ $(".c-fatan")[0].onclick = function () {//发弹幕
     $(".send").show();
 }
 
+var timeInit = 0;
 
 $(".c-src")[0].onclick = function () {//全景
 
-    jsonGet(rootUrl+'/user/gameBegin','',function (data) {
-        showMsg(data,'center');
+    jsonGet(rootUrl + '/user/gameBegin', '', function (data) {
+        showMsg(data, 'center');
     })
 
+    if (timeInit != 0) {
+        return
+    }
+    setInterval(function () {
+        $.get(rootUrl + '/user/timeBeforBegin', function (data, status) {
+            $(".c-src span")[0].innerHTML = data;
+        });
+    }, 1000);
+    timeInit = 1;
     // if (viewOnoff) {
     //     $(".c-src span")[0].innerHTML = "地面游览";
     //     $(".navIco-src")[0].style.background = "url(" + baseurl + "img/icodim.png) no-repeat";
