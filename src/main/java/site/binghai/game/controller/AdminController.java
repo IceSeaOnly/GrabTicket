@@ -132,12 +132,15 @@ public class AdminController {
     /**
      * 检票
      */
-    public Object checkTickets(@RequestParam String pass, @RequestParam String qrcode) {
+    @RequestMapping("checkTicket")
+    public Object checkTickets(@RequestParam String pass,@RequestParam String manager, @RequestParam String qrcode) {
         Ticket ticket = ticketService.findByQrCode(qrcode);
         if (ticket.isConsumed()) {
             return JsonReturn.fail(null, "此票已检");
         }
         ticket.setConsumed(true);
+        ticket.setManager(manager);
+        getBelongs().put(ticket.getOpenId(), ticket);
         ticketService.update(ticket);
         return JsonReturn.success(ticket, "检票成功!");
     }

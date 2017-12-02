@@ -1,6 +1,7 @@
 package site.binghai.game.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import site.binghai.game.constant.DataPool;
 import site.binghai.game.entity.DanMu;
@@ -53,21 +54,24 @@ public class GameController {
     @RequestMapping("danMuList")
     public Object danMuList() {
         List<DanMu> arr = danMuService.listTop100();
+        if (arr.isEmpty()) {
+            return JsonReturn.fail(null, "");
+        }
         return JsonReturn.success(arr.get(randomIndex(arr.size())));
     }
 
     private int randomIndex(int max) {
         Random random = new Random();
-        int v = random.nextInt(max - 1);
-        return v >= 0 ? v : 0;
+        int v = random.nextInt(max);
+        return v > 0 ? v - 1 : 0;
     }
 
     /**
      * 发弹幕
      */
     @RequestMapping(value = "danMu", method = RequestMethod.POST)
-    public Object danMu(@RequestParam String content) {
-        danMuService.save(content);
+    public Object danMu(@RequestParam String content,@RequestParam String openId) {
+        danMuService.save(content,openId);
         return JsonReturn.success(null);
     }
 
@@ -79,6 +83,8 @@ public class GameController {
         return JsonReturn.success(getTEXTSHOW(), getTEXTSHOW());
     }
 
+
+    private static final String GRAB_FAILED = JsonReturn.fail(null, "好遗憾,没有抢到!").toJSONString();
 
     /**
      * 抢票入口
@@ -93,27 +99,30 @@ public class GameController {
         if (ticket != null) {
             return JsonReturn.success(ticket, "恭喜!抢票成功!");
         }
-        return JsonReturn.fail(ticket, "好遗憾,没有抢到!");
+        return GRAB_FAILED;
     }
 
     /**
      * 同步抢票
      */
-    private synchronized Ticket grabOneTicket(String openId) {
+    private Ticket grabOneTicket(String openId) {
         if (!getDBWRITE()) {
-            setDBWRITE(Boolean.TRUE);
-            startWriteThread();
+            setDbWrite();
         }
         try {
             Ticket ticket = getBelongs().get(openId);
             if (ticket != null) {
                 return ticket;
             }
-            ticket = getTickets().poll(10, TimeUnit.MILLISECONDS);
+            if (getTickets().size() == 0) {
+                return null;
+            }
+            ticket = getTickets().poll(4, TimeUnit.MILLISECONDS);
             if (ticket != null) {
                 ticket.setOpenId(openId);
                 getBelongs().put(openId, ticket);
                 getDbQueue().put(ticket);
+                System.out.println(String.format("%s 已抢,openId=%s, 剩余 %d 个", ticket.getPosition(), ticket.getOpenId(), getTickets().size()));
                 return ticket;
             }
         } catch (InterruptedException e) {
@@ -122,11 +131,33 @@ public class GameController {
         return null;
     }
 
+    private static final String OK = JsonReturn.success("ok", "ok").toJSONString();
+
+    @RequestMapping("updateUserInfo")
+    public Object updateUserInfo(@RequestParam String openId, @RequestParam String name, @RequestParam String phone) {
+        Ticket ticket = getBelongs().get(openId);
+        if (ticket != null && !ticket.isConsumed() && StringUtils.isEmpty(ticket.getName()) && StringUtils.isEmpty(ticket.getPhone())) {
+            ticket.setName(name);
+            ticket.setPhone(phone);
+            getDbQueue().add(ticket);
+            System.out.println(String.format("更新成功,openId=%s,name=%s,phone=%s", openId, name, phone));
+        } else {
+            System.out.println(String.format("非法更新,openId=%s,name=%s,phone=%s", openId, name, phone));
+        }
+        return OK;
+    }
+
+    private synchronized void setDbWrite() {
+        if (getDBWRITE()) return;
+        setDBWRITE(Boolean.TRUE);
+        startWriteThread();
+    }
+
     /**
      * 获取剩余时间
-     * */
+     */
     @RequestMapping("timeBeforBegin")
-    public String timeBeforBegin(){
+    public String timeBeforBegin() {
         return DataPool.getHowLongBeforeBegin();
     }
 

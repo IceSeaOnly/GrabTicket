@@ -14,7 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class DataPool {
     private static long startTime = System.currentTimeMillis() + 999999999;
-    private static String TEXTSHOW = "默认字幕...默认字幕...默认字幕...默认字幕";
+    private static String TEXTSHOW = "抢票尚未开始，敬请期待哦~";
     private static String PASSCODE = "qwerasdf";
     private static Boolean DBWRITE = Boolean.FALSE;
     private static String indexPage = "";

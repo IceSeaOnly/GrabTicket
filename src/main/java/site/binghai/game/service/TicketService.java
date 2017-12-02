@@ -19,7 +19,7 @@ public class TicketService {
     @Autowired
     private TicketDao ticketDao;
 
-    public List<Ticket> listAll(){
+    public List<Ticket> listAll() {
         return ticketDao.findAll();
     }
 
@@ -35,6 +35,7 @@ public class TicketService {
     }
 
     public Ticket findByQrCode(String qrcode) {
-        return null;
+        List<Ticket> ls = ticketDao.findAllByPasswd(qrcode);
+        return ls.isEmpty() ? null : ls.get(0);
     }
 }

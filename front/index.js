@@ -3,7 +3,7 @@ var onoff1 = true;//这是导航状态
 var tanonoff = true;//弹幕的状态
 var onoff = false;//语音状态
 var viewOnoff = true;//全景状态
-var rootUrl = 'http://localhost:7709';
+var rootUrl = 'http://ticket.nanayun.cn';
 $(".pothook").click(function () {
     showNav();//显示或隐藏导航
 })
@@ -20,6 +20,17 @@ var init = {
     "navup": "img/navup2.gif",
     "timer": 500,
 }
+
+function getOpenId() {
+    var name = 'openid';
+    var pp = window.location.search;
+    var idx = pp.indexOf('openid=');
+    if(idx == -1) return null;
+    pp = pp.substr(idx+7,pp.length);
+    //alert(pp);
+    return pp;
+}
+
 function showNav() {//导航栏
     $(".navContent").slideToggle(500);
     if (onoff1) {
@@ -58,8 +69,8 @@ function showMsg(text, position) {
         $(".show_msg").css('bottom', '95%');
     }
     $('.show_msg').hide();
-    $('.show_msg').fadeIn(1000);
-    $('.show_msg').fadeOut(1000);
+    $('.show_msg').fadeIn(500);
+    $('.show_msg').fadeOut(2500);
 }
 //var arrdata = [];
 
@@ -132,7 +143,7 @@ $(function () {//点击发送弹幕
 
         var img = "http://img3.imgtn.bdimg.com/it/u=634098145,264198475&fm=214&gp=0.jpg";
 
-        $.post(rootUrl + '/user/danMu', {'content': text}, function (data, status) {
+        $.post(rootUrl + '/user/danMu', {'content': text,"openId":getOpenId()}, function (data, status) {
             console.log(data);
         })
 
@@ -205,7 +216,7 @@ var initScOnff = true;
 //var times = aud.duration;//这里获取到的是秒，定时器转换毫秒；但是iso获取不audio的时间长度，可以用后台传过来
 var times = 106 * 1000;//这里是
 
-//新添加的弹幕，去掉
+
 $(".tanClose")[0].addEventListener('click', adPlay, false);
 function adPlay(ev) {
     ev.stopPropagation();
@@ -285,18 +296,24 @@ $(".c-fatan")[0].onclick = function () {//发弹幕
 
 var timeInit = 0;
 
-$(".c-src")[0].onclick = function () {//全景
+$(".c-src")[0].onclick = function () {//我的票券
 
-    jsonGet(rootUrl + '/user/gameBegin', '', function (data) {
-        showMsg(data, 'center');
+    jsonGet(rootUrl + '/user/grabTicket?openId='+getOpenId(), '', function (data) {
+        showMsg('恭喜抢票成功!\n'+data['position'], 'center');
+        timer = setInterval(function () {
+            window.location.href='myTicket.html?openid='+getOpenId();
+        }, 4000);
     })
 
     if (timeInit != 0) {
-        return
+        return;
     }
     setInterval(function () {
         $.get(rootUrl + '/user/timeBeforBegin', function (data, status) {
             $(".c-src span")[0].innerHTML = data;
+            if(data.indexOf("00:") != -1){
+                window.location.href='color.html?openid='+getOpenId();
+            }
         });
     }, 1000);
     timeInit = 1;
@@ -305,13 +322,13 @@ $(".c-src")[0].onclick = function () {//全景
     //     $(".navIco-src")[0].style.background = "url(" + baseurl + "img/icodim.png) no-repeat";
     //     $(".navIco-src")[0].style.backgroundSize = "100% 100%";
     //
-    //     $(".model-wrap iframe")[0].src = "3d/index.html";
+    //     $(".model-wrap iframe")[0].src = "3d/color.html";
     // } else {
     //     $(".c-src span")[0].innerHTML = "空中俯瞰";
     //     $(".navIco-src")[0].style.background = "url(" + baseurl + "img/icofukan.png) no-repeat";
     //     $(".navIco-src")[0].style.backgroundSize = "100% 100%";
     //
-    //     $(".model-wrap iframe")[0].src = "3d/index.html";
+    //     $(".model-wrap iframe")[0].src = "3d/color.html";
     // }
     // viewOnoff = !viewOnoff;
 }

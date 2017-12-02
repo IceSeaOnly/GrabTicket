@@ -22,14 +22,14 @@ public class DanMuService {
     private long lastUpdate = 0;
 
     public List<DanMu> listTop100() {
-        if(lastUpdate + 10000 < System.currentTimeMillis()){
+        if (lastUpdate + 10000 < System.currentTimeMillis()) {
             updateDM();
         }
         return dmCache;
     }
 
     private synchronized void updateDM() {
-        if(lastUpdate + 10000 > System.currentTimeMillis()){
+        if (lastUpdate + 10000 > System.currentTimeMillis()) {
             return;
         }
         lastUpdate = System.currentTimeMillis();
@@ -41,9 +41,10 @@ public class DanMuService {
     }
 
     @Transactional
-    public void save(String content) {
+    public void save(String content, String openid) {
         DanMu danMu = new DanMu();
         danMu.setMessage(content);
+        danMu.setOpenId(openid);
         danMu.setVote(randomGoodPoints());
         danMuDao.save(danMu);
     }

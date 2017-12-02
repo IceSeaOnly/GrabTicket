@@ -19,7 +19,8 @@ public class DanMu {
     @GeneratedValue
     private int id;
     @Transient
-    private String state = "0";
+    private String state = "1";
+    private String openId;
     @Transient
     private String headimg = "img/tanmuhead.jpg";
     private String message;

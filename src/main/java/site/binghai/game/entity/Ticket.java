@@ -23,6 +23,7 @@ public class Ticket {
     private String passwd;
     private String name;
     private String phone;
+    private String manager;
     private boolean bound;
     private boolean consumed;
     private long bindTime;

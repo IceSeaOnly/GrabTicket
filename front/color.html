@@ -1,0 +1,174 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+<link rel="stylesheet" href="/css/reset1.css">
+<link rel="stylesheet" href="/css/global.css">
+<link rel="stylesheet" href="/css/open.css">
+	<style>
+		.show_msg {
+			width: 100%;
+			height: 35px;
+			text-align: center;
+			position: fixed;
+			left: 0;
+			z-index: 999;
+		}
+
+		.show_span {
+			display: inline-block;
+			height: 35px;
+			padding: 0 15px;
+			line-height: 35px;
+			background: rgba(0, 0, 0, 0.8);
+			border-radius: 50px;
+			color: #fff;
+			font-size: 1em;
+		}
+	</style>
+<title id="id_title">抢票倒计时</title>
+	<script>
+        function getOpenId() {
+            var name = 'openid';
+            var pp = window.location.search;
+            var idx = pp.indexOf('openid=');
+            if(idx == -1) return null;
+            pp = pp.substr(idx+7,pp.length);
+            //alert(pp);
+            return pp;
+        }
+        function showMsg(text, position) {
+            var show = $('.show_msg').length
+            if (show > 0) {
+
+            } else {
+                var div = $('<div></div>');
+                div.addClass('show_msg');
+                var span = $('<span></span>');
+                span.addClass('show_span');
+                span.appendTo(div);
+                span.text(text);
+                $('body').append(div);
+            }
+            $(".show_span").text(text);
+            if (position == 'bottom') {
+                $(".show_msg").css('bottom', '5%');
+            } else if (position == 'center') {
+                $(".show_msg").css('top', '');
+                $(".show_msg").css('bottom', '50%');
+            } else {
+                $(".show_msg").css('bottom', '95%');
+            }
+            $('.show_msg').hide();
+            $('.show_msg').fadeIn(500);
+            $('.show_msg').fadeOut(2500);
+        }
+	</script>
+</head>
+<body ontouchstart="" class="open-body">
+
+<div class="wrapper">
+
+	<div class="bg rotate"></div>
+	
+	<div class="open-has " id="id_open-has">
+		<h3 class="title-close">距离抢票开始:<span class="user" id="id_time_has">59:59</span></h3>
+		<h3 class="title-open" id="id_msg">恭喜你，抢票成功!</h3>
+		<div class="mod-chest">
+			<div class="chest-close show">
+				<div class="gift"></div>
+				<div class="tips">
+					<i class="arrow"></i>
+				</div>
+			</div>
+			<div class="chest-open ">
+				<div class="mod-chest-cont open-cont">
+					<div class="content">
+						<div class="gift">
+							<span id="id_position">手速慢了!没抢到!</span> </div>
+						<div class="func" id="id_myBtn" hiden="hiden">
+							<a href="myTicket.html"><button class="chest-btn">查看我的检票码</button></a>
+						</div>
+					</div>
+				</div>
+			</div>
+		
+		</div>
+	</div>
+
+	<div class="open-none" style="display:none">
+		<h3>你来晚啦，下次早点吧！</h3>
+		<div class="mod-chest">
+			<div class="chest-open show"></div>
+		</div>
+		<div class="func">
+			<button class="chest-btn">查看领取详情</button>
+		</div>
+	</div>
+</div>
+  
+<script type="text/javascript" src="http://s3.mogucdn.com/mlcdn/c45406/171130_0h40a8dh6ei2269b0ga86f2dalj96.js"></script><!--js/zepto.min.js-->
+<script src="http://s3.mogucdn.com/mlcdn/c45406/171127_2fddc534a9ef4k1f842i08l3kljff.js"></script><!--jquery-->
+
+<script type="text/javascript">
+$(".chest-close").click(function(){
+
+	if($("#id_time_has").text() != '00:00'){
+	    showMsg('还没开始呢老铁!','center');
+	    return;
+	}
+
+	$(this).addClass("shake");
+	var that=this;
+
+	this.addEventListener("webkitAnimationEnd", function(){
+        var openId = getOpenId();
+        if (openId == null || openId.toString().length < 10) {
+            window.location.href = 'http://weixin.qdxiaogutou.com/ticket_game.php?back_url=http://ticket.nanayun.cn/color.html';
+            return;
+        }
+
+        $.getJSON('http://ticket.nanayun.cn/user/grabTicket?openId=' + getOpenId(), '', function (data, status) {
+            if (data['code'] == 'success') {
+                $("#id_myBtn").show();
+                $("#chest-btn").show();
+                $("#id_position").text(data['data'].position);
+                setTimeout(function(){
+                    $(".chest-open").addClass("blur");
+                },500)
+            } else {
+                $("#id_myBtn").hide();
+                $("#chest-btn").hide();
+                $("#id_msg").text(data['msg']);
+            }
+            $(that).closest("#id_open-has").addClass("opened");
+            $(that).removeClass("show");
+            $(that).closest(".mod-chest").find(".chest-open").addClass("show");
+
+        });
+	}, false);
+	
+});
+
+window.onload = function () {
+    var openId = getOpenId();
+    if (openId == null || openId.toString().length < 10) {
+        window.location.href = 'http://weixin.qdxiaogutou.com/ticket_game.php?back_url=http://ticket.nanayun.cn/color.html';
+        return;
+    }
+    setInterval(function () {
+        $.get('http://ticket.nanayun.cn/user/timeBeforBegin', function (data, status) {
+            $("#id_title").text('抢票倒计时'+data);
+            $("#id_time_has").text(data);
+        });
+    }, 1000);
+}
+</script>
+
+</body>
+</html>

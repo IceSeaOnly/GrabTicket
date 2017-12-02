@@ -9,6 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <script src="http://s3.mogucdn.com/mlcdn/c45406/171127_3b6b06862307ia661k3bhf910dh50.js"></script>
+    <script src="http://s3.mogucdn.com/mlcdn/c45406/171127_2fddc534a9ef4k1f842i08l3kljff.js"></script><!--jquery-->
     <link rel="stylesheet" href="http://g.alicdn.com/msui/sm/0.6.2/css/sm.min.css">
     <link rel="stylesheet" href="http://g.alicdn.com/msui/sm/0.6.2/css/sm-extend.min.css">
 
@@ -20,28 +21,79 @@
         <br>
         <br>
         <h2>我的入场券</h2>
-        <div id="qrcode" >
+        <div id="qrcode">
         </div>
-        <h3>一楼11排11号</h3>
-        <h3 style="color:green">未检票</h3>
-        <h3 style="color:red">已检票</h3>
+        <h3 id="t-postion" hidden="hidden">一楼11排11号</h3>
+        <h3 id="t-unused" style="color:green" hidden="hidden">未检票</h3>
+        <h3 id="t-used" style="color:red" hidden="hidden">已检票</h3>
+        <h3 id="t-error" style="color:red" hidden="hidden">网络错误</h3>
     </div>
 </div>
 
 <script type='text/javascript' src='http://g.alicdn.com/sj/lib/zepto/zepto.min.js' charset='utf-8'></script>
 <script type='text/javascript' src='http://g.alicdn.com/msui/sm/0.6.2/js/sm.min.js' charset='utf-8'></script>
 <script type='text/javascript' src='http://g.alicdn.com/msui/sm/0.6.2/js/sm-extend.min.js' charset='utf-8'></script>
-
 <script>
-    window.onload =function(){
-        var qrcode = new QRCode(document.getElementById("qrcode"), {
-            width : 200,//设置宽高
-            height : 200
-        });
-        qrcode.makeCode("http://www.baidu.com");
-        document.getElementById("send").onclick =function(){
-            qrcode.makeCode(document.getElementById("getval").value);
+    function getOpenId() {
+        var name = 'openid';
+        var pp = window.location.search;
+        var idx = pp.indexOf('openid=');
+        if(idx == -1) return null;
+        pp = pp.substr(idx+7,pp.length);
+        //alert(pp);
+        return pp;
+    }
+</script>
+<script>
+    var urlRoot = 'http://ticket.nanayun.cn';
+
+    window.onload = function () {
+        var openId = getOpenId();
+        if (openId == null || openId.toString().length < 10) {
+            window.location.href = 'http://weixin.qdxiaogutou.com/ticket_game.php?back_url=http://ticket.nanayun.cn/myTicket.html';
+            return;
         }
+
+        $.getJSON(urlRoot + '/user/grabTicket?openId=' + getOpenId(), '', function (data, status) {
+            if (data['code'] == 'success') {
+                var qrcode = new QRCode(document.getElementById("qrcode"), {
+                    width: 200,//设置宽高
+                    height: 200
+                });
+                qrcode.makeCode(data['data']['passwd']);
+                checkMyTicket();
+                timer = setInterval(function () {
+                    checkMyTicket();
+                }, 4000);
+            } else {
+                $("#t-error").show();
+                $("#t-error").text(data['msg']);
+            }
+        });
+
+    }
+
+    function checkMyTicket() {
+        $.getJSON(urlRoot + "/user/grabTicket?openId=" + getOpenId(), "", function (data,status) {
+            if(data['code'] ==  'success'){
+                $("#t-postion").show();
+                $("#t-error").hide();
+                $("#t-postion").text(data['data'].position);
+                if(data['data'].consumed){
+                    $("#t-unused").hide();
+                    $("#t-used").show();
+                }else{
+                    $("#t-unused").show();
+                    $("#t-used").hide();
+                }
+            }else{
+                $("#t-error").text(data['msg']);
+                $("#t-postion").hide();
+                $("#t-unused").hide();
+                $("#t-used").hide();
+                $("#t-error").show();
+            }
+        });
     }
 
 
